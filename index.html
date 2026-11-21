@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Stickman Battle Online — GitHub Edition</title>
+<title>Stickman Battle Online</title>
 <script src="https://unpkg.com"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; user-select: none; }
@@ -64,6 +64,12 @@ let topic = '';
 let lastSend = 0;
 
 function joinRoom() {
+  if (typeof mqtt === 'undefined') {
+    statusEl.style.color = '#ff5555';
+    statusEl.innerText = 'Ошибка: скрипт MQTT не загрузился (блокировка unpkg)';
+    return;
+  }
+
   const room = document.getElementById('room-name').value.trim();
   if (!room) return;
   if (client) client.end();
@@ -73,10 +79,10 @@ function joinRoom() {
   enemy.x = 600; enemy.dir = -1; enemy.color = '#ff3d71';
 
   statusEl.style.color = '#ffd54f';
-  statusEl.innerText = 'Подключение к облаку...';
+  statusEl.innerText = 'Подключение к Mosquitto...';
   topic = 'gh_stickman_pvp_barnaul/' + room;
 
-  client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+  client = mqtt.connect('wss://test.mosquitto.org:8081');
 
   client.on('connect', () => {
     client.subscribe(topic);
@@ -85,9 +91,9 @@ function joinRoom() {
     send({ type: 'join' });
   });
 
-  client.on('error', () => {
+  client.on('error', err => {
     statusEl.style.color = '#ff5555';
-    statusEl.innerText = 'Ошибка сети! Проверь интернет';
+    statusEl.innerText = 'Ошибка сервера: ' + err.message;
   });
 
   client.on('message', (t, msg) => {
